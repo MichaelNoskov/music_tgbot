@@ -1,6 +1,27 @@
-version: '3.8'
+version: '3.7'
 
 services:
-  telegram_bot:
-    build: .
-    restart: unless-stopped
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    command: server --console-address ":${MINIO_PORT}" /data
+    env_file:
+      - .env
+    expose:
+      - "${MINIO_API_PORT}"
+      - "${MINIO_PORT}"
+    ports:
+       - "${MINIO_API_PORT}:${MINIO_API_PORT}"
+       - "${MINIO_PORT}:${MINIO_PORT}"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - audio-files:/data
+    environment:
+      MINIO_ROOT_USER: {MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: {MINIO_ROOT_PASSWORD}
+
+volumes:
+  audio-files:
