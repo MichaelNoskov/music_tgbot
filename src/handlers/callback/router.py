@@ -1,9 +1,5 @@
 # src/handlers/callback/router.py
 
-from aiogram import Router, types
+from aiogram import Router
 
 router = Router()
-
-@router.callback_query()
-async def handle_callback(callback_query: types.CallbackQuery):
-    await callback_query.answer("Callback received!")
