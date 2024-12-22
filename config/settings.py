@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     BOT_WEBHOOK_URL: str 
  
     MINIO_PORT: int 
-    MINIO_API_PORT: int 
+    MINIO_API_PORT: int
     MINIO_ENDPOINT: str 
     MINIO_ROOT_USER: str 
     MINIO_ROOT_PASSWORD: str 
