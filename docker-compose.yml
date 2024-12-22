@@ -20,8 +20,15 @@ services:
     volumes:
       - audio-files:/data
     environment:
-      MINIO_ROOT_USER: {MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: {MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
 
 volumes:
   audio-files:
