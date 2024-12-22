@@ -14,3 +14,11 @@ dp = Dispatcher()
 dp.include_router(command_router)
 dp.include_router(message_router)
 dp.include_router(callback_router)
+
+def get_dp() -> Dispatcher:
+    global dp
+    return dp
+
+def get_bot() -> Bot:
+    global bot
+    return bot
