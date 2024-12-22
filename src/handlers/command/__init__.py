@@ -1,1 +1,1 @@
-from . import menu, start, become_author
+from . import menu, start
