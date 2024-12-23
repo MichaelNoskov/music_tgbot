@@ -27,7 +27,7 @@ async def start(message: Message, state: FSMContext) -> None:
         )
 
         users_queue = await channel.declare_queue(
-            'user_messages',
+            'user_ask',
             durable=True,
         )
 
@@ -39,7 +39,7 @@ async def start(message: Message, state: FSMContext) -> None:
         )
         await users_queue.bind(
             exchange,
-            'user_messages'
+            'user_ask'
         )
 
         await exchange.publish(
@@ -52,7 +52,7 @@ async def start(message: Message, state: FSMContext) -> None:
                     )
                 ),
             ),
-            'user_messages'
+            'user_ask'
         )
     
     await message.answer(render('start.jinja2'))
