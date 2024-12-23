@@ -1,10 +1,11 @@
-from sqlalchemy import Integer, ForeignKey
-from sqlalchemy.orm import Mapped
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import mapped_column
 from .meta import Base
+from .meta import UUIDMixin
 
 
-class UserMusic(Base):
+class UserMusic(Base, UUIDMixin):
     __tablename__ = 'usermusic'
     
-    user_id = Mapped(Integer, ForeignKey('user.id'), primary_key=True)
-    music_id = Mapped(Integer, ForeignKey('music.id'), primary_key=True)
+    user_id = mapped_column('user', ForeignKey('user.id'), nullable=False)
+    music_id = mapped_column('music', ForeignKey('music.id'), nullable=False)

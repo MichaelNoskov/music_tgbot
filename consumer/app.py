@@ -1,23 +1,25 @@
-import asyncio
-import logging
-import aio_pika
+import logging.config
+
 import msgpack
 
-from storage.rabbit import channel_pool
+from consumer.handlers.event_distribution import handle_event_distribution
+from consumer.logger import LOGGING_CONFIG, logger
+from src.storage import rabbit
+
 
 async def main() -> None:
-    queue_name = "user_ask"
+    logging.config.dictConfig(LOGGING_CONFIG)
+    logger.info('Запуск consumer...')
+    queue_name = 'user_ask'
+    async with rabbit.channel_pool.acquire() as channel:
+        await channel.set_qos(
+            prefetch_count=10,
+        )
 
-    async with channel_pool.acquire() as channel:
-
-        # Will take no more than 10 messages in advance
-        await channel.set_qos(prefetch_count=10)
-
-        # Declaring queue
         queue = await channel.declare_queue(queue_name, durable=True)
 
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
-                    logging.error(message.body)
-                    print(msgpack.unpackb(message.body))
+                    body = msgpack.unpackb(message.body)
+                    await handle_event_distribution(body)

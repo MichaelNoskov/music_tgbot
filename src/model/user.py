@@ -9,3 +9,4 @@ class User(Base, UUIDMixin):
 
     username: Mapped[str] = mapped_column(index=True)
     description: Mapped[str] = mapped_column(String)
+    # favorite_music: Mapped[List[Music]] = relationship(secondary='usermusic')

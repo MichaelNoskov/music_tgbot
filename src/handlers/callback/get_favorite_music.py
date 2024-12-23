@@ -5,7 +5,7 @@ from src.handlers.callback.router import router
 
 
 @router.callback_query(F.data == 'get_favorite_music')
-async def get_popular_recipe(call: CallbackQuery) -> None:
+async def get_favorite_music(call: CallbackQuery) -> None:
     if isinstance(call.message, Message):
         await call.answer('Выбираю трек, который вам нравится...')
 
