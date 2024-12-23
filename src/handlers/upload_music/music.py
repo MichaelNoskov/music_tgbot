@@ -1,13 +1,13 @@
 from aiogram.filters import Command
 from aiogram.filters import BaseFilter
-from aiogram.types import ContentType
-from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from src.handlers.upload_music.router import router
 from src.handlers.states.auth import AuthGroup
 from src.handlers.states.music import MusicUploadForm
 from src.handlers.command.start import menu as redirect_menu
+from src.storage.minio_ import upload_music
 
 
 class AudioFilter(BaseFilter):
@@ -44,15 +44,23 @@ async def process_file(message: Message, state: FSMContext) -> None:
     file_info = await bot.get_file(audio_file_id)
     file_bytes = await bot.download_file(file_info.file_path)
 
+    form: dict[str, str | int] = {
+        field: field_data
+        for field, field_data in (await state.get_data()).items()
+    }
+
     # сохранение музыки в minio
 
-    await state.update_data(file=file_info.file_path)
+    filepath = f'{message.from_user.id}_{form["genre"]}_{form["title"]}.mp3'
 
+    await state.update_data(file=filepath)
 
     form: dict[str, str | int] = {
         field: field_data
         for field, field_data in (await state.get_data()).items()
     }
+
+    await upload_music(filepath, file_bytes.getvalue())
 
     await state.set_state(MusicUploadForm.nothing)
 
