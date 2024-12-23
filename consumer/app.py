@@ -6,7 +6,7 @@ import msgpack
 from storage.rabbit import channel_pool
 
 async def main() -> None:
-    queue_name = "user_messages"
+    queue_name = "user_ask"
 
     async with channel_pool.acquire() as channel:
 
