@@ -1,5 +1,5 @@
-from sqlalchemy import Text, String, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 from .meta import Base, UUIDMixin
 
 
@@ -11,4 +11,4 @@ class Music(Base, UUIDMixin):
     genre: Mapped[str] = mapped_column(String)
     streams: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
     # vector: Mapped[int] = mapped_column(Integer)
-    file_url: Mapped[str] = mapped_column(nullable=False)  # URL к файлу в MinIO
+    file_url: Mapped[str] = mapped_column(nullable=False) # URL к файлу в MinIO

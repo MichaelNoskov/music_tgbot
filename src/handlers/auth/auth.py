@@ -34,7 +34,7 @@ async def process_name(message: Message, state: FSMContext) -> None:
 async def process_username(message: Message, state: FSMContext) -> None:
     await state.update_data(username=message.text)
     await state.set_state(AuthUserProfileForm.description)
-    await message.answer(f'Поделитесь информацией о себе:')
+    await message.answer('Поделитесь информацией о себе:')
 
 
 @router.message(AuthUserProfileForm.description)
@@ -48,13 +48,12 @@ async def process_description(message: Message, state: FSMContext) -> None:
 
     await state.set_state(AuthGroup.authorized)
 
-    # запрос в rabbit для сохранения данных в бд   
+    # запрос в rabbit для сохранения данных в бд
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
-        
 
         form['id'] = message.from_user.id
         form['action'] = 'create_profile'

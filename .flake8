@@ -1,0 +1,27 @@
+[flake8]
+max-line-length=120
+max-local-variables=8
+max-complexity=8
+max-module-members=10
+max-line-complexity=18
+
+extend-ignore=
+        # encoding
+        C101,
+        # black brother
+        BLK100,
+per-file-ignores=
+        ./alembic/versions/*:
+            E128,
+            E122,
+            W291
+        *__init__.py:
+            # imported but unused
+            F401
+        test_*.py:
+            # assert usage
+            S101,
+            # complex lines (ok for test data)
+        settings.py:
+            # line too long (url)
+            E501

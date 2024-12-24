@@ -9,7 +9,6 @@ from consumer.app import main
 from consumer.logger import logger, logging, LOGGING_CONFIG
 
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
