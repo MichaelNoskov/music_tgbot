@@ -21,21 +21,21 @@ class AudioFilter(BaseFilter):
 @router.message(Command('upload_music'), AuthGroup.authorized)
 async def music(message: Message, state: FSMContext) -> None:
     await state.set_state(MusicUploadForm.title)
-    await message.answer(f'Введи название музыки:')
+    await message.answer('Введи название музыки:')
 
 
 @router.message(MusicUploadForm.title)
 async def process_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
     await state.set_state(MusicUploadForm.genre)
-    await message.answer(f'Введи название жанра:')
+    await message.answer('Введи название жанра:')
 
 
 @router.message(MusicUploadForm.genre)
 async def process_genre(message: Message, state: FSMContext) -> None:
     await state.update_data(genre=message.text)
     await state.set_state(MusicUploadForm.file)
-    await message.answer(f'Отправь файл с музыкой')
+    await message.answer('Отправь файл с музыкой')
 
 
 @router.message(AudioFilter(), MusicUploadForm.file)
@@ -65,11 +65,10 @@ async def process_file(message: Message, state: FSMContext) -> None:
 
     await state.set_state(MusicUploadForm.nothing)
 
-
-    # запрос в rabbit для сохранения данных в бд   
+    # запрос в rabbit для сохранения данных в бд
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 

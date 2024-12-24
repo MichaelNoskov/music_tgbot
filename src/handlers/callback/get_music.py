@@ -18,7 +18,7 @@ async def get_music(call: CallbackQuery) -> None:
 
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 
@@ -36,12 +36,12 @@ async def get_music(call: CallbackQuery) -> None:
         user_queue = await channel.declare_queue(user_queue_name, durable=True)
 
         await user_queue.bind(exchange, user_queue_name)
-    
+
         retries = 3
         for _ in range(retries):
             try:
                 answer = await user_queue.get()
-                info = msgpack.unpackb(answer.body)        
+                info = msgpack.unpackb(answer.body)
 
                 music_text = render('music.jinja2', music=info)
 

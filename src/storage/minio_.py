@@ -13,14 +13,15 @@ minio_client = Minio(
     secure=False
 )
 
+
 async def upload_music(filename, audio_bytes):
     try:
         if not minio_client.bucket_exists(settings.MINIO_BUCKET):
             minio_client.make_bucket(settings.MINIO_BUCKET)
 
         minio_client.put_object(
-            bucket_name=settings.MINIO_BUCKET, 
-            object_name=filename, 
+            bucket_name=settings.MINIO_BUCKET,
+            object_name=filename,
             data=BytesIO(audio_bytes),
             length=len(audio_bytes)
         )
@@ -28,6 +29,7 @@ async def upload_music(filename, audio_bytes):
     except S3Error as e:
         print(f"Error occurred: {e}")
         return
+
 
 async def get_music(audiofile):
     try:
@@ -37,13 +39,14 @@ async def get_music(audiofile):
         print(f"Error occurred: {e}")
         return
 
+
 async def get_random_music():
     objects = list(minio_client.list_objects(settings.MINIO_BUCKET))
-    
+
     if not objects:
         print("No available files.")
         return None
-    
+
     random_music = random.choice(objects)
-    
+
     return random_music.object_name

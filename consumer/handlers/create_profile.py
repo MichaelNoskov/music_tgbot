@@ -16,7 +16,7 @@ async def handle_event_profile(body: Dict[str, Any]) -> None:
             # id=int(body.get('id')),
         )
         db.add(new_user)
-        
+
         try:
             await db.commit()
             logger.info(f'User created: {new_user}')
