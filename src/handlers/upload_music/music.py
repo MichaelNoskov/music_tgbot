@@ -6,8 +6,11 @@ from aiogram.fsm.context import FSMContext
 from src.handlers.upload_music.router import router
 from src.handlers.states.auth import AuthGroup
 from src.handlers.states.music import MusicUploadForm
-from src.handlers.command.start import menu as redirect_menu
 from src.storage.minio_ import upload_music
+import aio_pika
+import msgpack
+from src.storage.rabbit import channel_pool
+from aio_pika import ExchangeType
 
 
 class AudioFilter(BaseFilter):
@@ -52,19 +55,35 @@ async def process_file(message: Message, state: FSMContext) -> None:
     # сохранение музыки в minio
 
     filepath = f'{message.from_user.id}_{form["genre"]}_{form["title"]}.mp3'
-
-    await state.update_data(file=filepath)
+    await upload_music(filepath, file_bytes.getvalue())
+    await state.update_data(file_url=filepath)
 
     form: dict[str, str | int] = {
         field: field_data
         for field, field_data in (await state.get_data()).items()
     }
 
-    await upload_music(filepath, file_bytes.getvalue())
-
     await state.set_state(MusicUploadForm.nothing)
 
+
     # запрос в rabbit для сохранения данных в бд   
+    async with channel_pool.acquire() as channel:
+        exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
+    
+        queue = await channel.declare_queue('user_ask', durable=True)
+        await queue.bind(exchange, 'user_ask')
+
+        form['user_id'] = message.from_user.id
+        form['action'] = 'upload_music'
+
+        await exchange.publish(
+            aio_pika.Message(
+                msgpack.packb(
+                    form
+                ),
+            ),
+            'user_ask'
+        )
 
     await message.answer('окей')
 

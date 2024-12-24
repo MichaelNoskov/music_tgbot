@@ -1,32 +1,26 @@
-from uuid import uuid4
+from collections.abc import AsyncGenerator
 
 from asyncpg import Connection
 from sqlalchemy import AsyncAdaptedQueuePool
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from typing_extensions import AsyncGenerator
 
 from config.settings import settings
-
-
-class CConnection(Connection):
-    def _get_unique_id(self, prefix: str) -> str:
-        return f'__asyncpg_{prefix}_{uuid4()}__'
+from consumer.logger import logger
 
 
 def create_engine() -> AsyncEngine:
+    logger.info('Создание движка для подключения к базе данных')
     return create_async_engine(
         settings.db_url,
         poolclass=AsyncAdaptedQueuePool,
         connect_args={
-            'connection_class': CConnection,
+            'connection_class': Connection,
         },
-        # 'pool_recycle': 3600,
-        # 'pool_size': 10,
-        # 'max_overflow': 30,
     )
 
 
-def create_session_maker(_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+def create_session(_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    logger.info('Создание сессии для взаимодействия с базой данных')
     return async_sessionmaker(
         bind=_engine,
         class_=AsyncSession,
@@ -35,10 +29,6 @@ def create_session_maker(_engine: AsyncEngine) -> async_sessionmaker[AsyncSessio
     )
 
 
-engine = create_engine()  # connect to db
-async_session = create_session_maker(engine)  # способы управления моделями внутри питона
+engine = create_engine()
+async_session = create_session(engine)
 
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session() as db:
-        yield db

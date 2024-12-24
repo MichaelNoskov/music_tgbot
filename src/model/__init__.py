@@ -1,5 +1,5 @@
 from sqlalchemy.orm import configure_mappers
 
-from . import music, user, usermusic
+from . import music, person, usermusic
 
 configure_mappers()

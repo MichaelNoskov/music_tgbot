@@ -1,22 +1,19 @@
 version: 1
-disable_existing_loggers: no
+disable_existing_loggers: False
+
 formatters:
   console_formatter:
-    (): src.logger.ConsoleFormatter
-    format: "%(levelname)-8s | [%(name)s] | %(message)s"
-    datefmt: "%Y-%m-%d %H:%M:%S"
+    format: '%(asctime)s - %(levelname)s - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
 
 handlers:
-  console_handler:
+  console:
     class: logging.StreamHandler
     formatter: console_formatter
+    level: INFO
 
 loggers:
-  backend_logger:
+  consumer_logger:
     level: INFO
+    handlers: [console]
     propagate: no
-    handlers: [console_handler]
-
-root:
-  level: INFO
-  handlers: [console_handler]

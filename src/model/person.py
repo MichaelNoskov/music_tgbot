@@ -1,12 +1,12 @@
-from typing import List
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .meta import Base, UUIDMixin
-from .music import Music
+from sqlalchemy.orm import Mapped, mapped_column
+from .meta import Base
 
-class User(Base, UUIDMixin):
-    __tablename__ = 'user'
 
+class Person(Base):
+    __tablename__ = 'person'
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
     username: Mapped[str] = mapped_column(index=True)
     description: Mapped[str] = mapped_column(String)
     # favorite_music: Mapped[List[Music]] = relationship(secondary='usermusic')

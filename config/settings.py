@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     @property
     def rabbit_url(self) -> str:
-        return f"amqp://{self.RABBIT_USER}:{self.RABBIT_PASSWORD}@{self.RABBIT_HOST}:{self.RABBIT_PORT}/"
+        return f"amqp://{self.RABBIT_USER}:{self.RABBIT_PASSWORD}@{self.RABBIT_HOST}:{self.RABBIT_PORT}"
 
     class Config:
         env_file = ".env"
