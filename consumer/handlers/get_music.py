@@ -7,6 +7,7 @@ from sqlalchemy import select
 from config.settings import settings
 from consumer.storage.db import async_session
 from src.model.music import Music
+from src.model.person import Person
 from src.storage.rabbit import channel_pool
 import random
 from consumer.logger import logger
@@ -26,11 +27,18 @@ async def handle_event_music(body: Dict[str, Any]) -> None:
         
         if len(music_objects) > 0:
             mus = music_objects[random.randint(0, len(music_objects)-1)]
+
+            user = (await db.execute(select(Person).where(Person.id == mus.author))).one()[0]
+
+            mus.streams += 1
+            await db.commit()
+
             random_music = {
                 'title': mus.title,
                 'genre': mus.genre,
-                'author': 'Michael',
+                'author': user.username,
                 'streams': mus.streams,
+                'file_url': mus.file_url
             }
 
         logger.info(f'Music was found: {random_music}')

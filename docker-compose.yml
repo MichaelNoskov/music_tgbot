@@ -6,6 +6,10 @@ services:
       context: .
     restart: unless-stopped
     command: python main.py
+    expose:
+      - "443"
+    ports:
+       - "443:443"
   minio:
     image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
     command: server --console-address ":${MINIO_PORT}" /data

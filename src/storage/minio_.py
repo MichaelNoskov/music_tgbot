@@ -34,13 +34,9 @@ async def upload_music(filename, audio_bytes):
 async def get_music(audiofile):
     try:
         response = minio_client.get_object(settings.MINIO_BUCKET, audiofile)
-        audio_data = response.read()
-        
-        return audio_data, None
-    
+        return response.read()
     except S3Error as e:
         print(f"Error occurred: {e}")
-        return
 
 async def get_random_music():
     objects = list(minio_client.list_objects(settings.MINIO_BUCKET))
