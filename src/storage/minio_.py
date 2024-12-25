@@ -25,6 +25,7 @@ async def upload_music(filename, audio_bytes):
             length=len(audio_bytes)
         )
         print(f"File {filename} uploaded to bucket {settings.MINIO_BUCKET}.")
+
     except S3Error as e:
         print(f"Error occurred: {e}")
         return
@@ -32,8 +33,11 @@ async def upload_music(filename, audio_bytes):
 
 async def get_music(audiofile):
     try:
-        minio_client.fget_object(settings.MINIO_BUCKET, audiofile, f"{settings.MINIO_LOCAL_STORAGE}{audiofile}")
-        print(f"File '{audiofile}' downloaded as 'f{settings.MINIO_LOCAL_STORAGE}{audiofile}'.")
+        response = minio_client.get_object(settings.MINIO_BUCKET, audiofile)
+        audio_data = response.read()
+        
+        return audio_data, None
+    
     except S3Error as e:
         print(f"Error occurred: {e}")
         return
