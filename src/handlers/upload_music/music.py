@@ -12,6 +12,7 @@ import aio_pika
 import msgpack
 from src.storage.rabbit import channel_pool
 from aio_pika import ExchangeType
+from src.handlers.command.start import menu as render_menu
 
 
 class AudioFilter(BaseFilter):
@@ -90,6 +91,6 @@ async def process_file(message: Message, state: FSMContext) -> None:
             'user_ask'
         )
 
-    await message.answer('окей')
+    # await message.answer('окей')
 
-    # await redirect_menu(message)
+    await render_menu(message)
