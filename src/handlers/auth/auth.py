@@ -56,7 +56,7 @@ async def process_description(message: Message, state: FSMContext) -> None:
         await queue.bind(exchange, 'user_ask')
         
 
-        form['id'] = message.from_user.id
+        form['user_id'] = message.from_user.id
         form['action'] = 'create_profile'
 
         await exchange.publish(

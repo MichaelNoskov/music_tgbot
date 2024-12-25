@@ -13,7 +13,7 @@ async def handle_event_profile(body: Dict[str, Any]) -> None:
         new_user = Person(
             username=body.get('username'),
             description=body.get('description'),
-            # id=int(body.get('id')),
+            telegram_id=str(body.get('user_id')),
         )
         db.add(new_user)
         

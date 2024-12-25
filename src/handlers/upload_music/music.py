@@ -1,7 +1,8 @@
 from aiogram.filters import Command
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram import F
 
 from src.handlers.upload_music.router import router
 from src.handlers.states.auth import AuthGroup
@@ -22,6 +23,12 @@ class AudioFilter(BaseFilter):
 async def music(message: Message, state: FSMContext) -> None:
     await state.set_state(MusicUploadForm.title)
     await message.answer(f'Введи название музыки:')
+
+
+@router.callback_query(F.data == 'upload_music', AuthGroup.authorized)
+async def music(call: CallbackQuery, state: FSMContext) -> None:
+    await state.set_state(MusicUploadForm.title)
+    await call.message.answer(f'Введи название музыки:')
 
 
 @router.message(MusicUploadForm.title)
@@ -62,8 +69,6 @@ async def process_file(message: Message, state: FSMContext) -> None:
         field: field_data
         for field, field_data in (await state.get_data()).items()
     }
-
-    await state.set_state(MusicUploadForm.nothing)
 
 
     # запрос в rabbit для сохранения данных в бд   

@@ -9,20 +9,31 @@ from consumer.storage.db import async_session
 from src.model.music import Music
 from src.storage.rabbit import channel_pool
 import random
+from consumer.logger import logger
 
 
 async def handle_event_music(body: Dict[str, Any]) -> None:
 
     user_id = body.get('user_id')
     async with async_session() as db:
+
+        logger.info('music Loading...')
         
         result = await db.execute(select(Music))
         music_objects = result.scalars().all()
 
         random_music = {'title': 'default', 'genre': 'classic', 'author': 'Michael', 'streams': '∞'}
         
-        if music_objects:
-            random_music = random.choice(music_objects).to_dict()
+        if len(music_objects) > 0:
+            mus = music_objects[random.randint(0, len(music_objects)-1)]
+            random_music = {
+                'title': mus.title,
+                'genre': mus.genre,
+                'author': 'Michael',
+                'streams': mus.streams,
+            }
+
+        logger.info(f'Music was found: {random_music}')
 
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange("user_music", ExchangeType.DIRECT, durable=True)
