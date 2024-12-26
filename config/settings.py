@@ -11,20 +11,20 @@ class Settings(BaseSettings):
     MINIO_ROOT_USER: str
     MINIO_ROOT_PASSWORD: str
     MINIO_BUCKET: str
-    MINIO_LOCAL_STORAGE: str
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
 
     RABBIT_HOST: str
     RABBIT_PORT: int
     RABBIT_USER: str
     RABBIT_PASSWORD: str
 
+    POSTGRES_HOST: str
     POSTGRES_PORT: int
     POSTGRES_DB: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
-    POSTGRES_HOST: str
+
+    REDIS_HOST: str
+    REDIS_PORT: str
 
     USER_QUEUE: str = 'user_music.{user_id}'
 

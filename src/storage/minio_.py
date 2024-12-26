@@ -37,14 +37,3 @@ async def get_music(audiofile):
         return response.read()
     except S3Error as e:
         print(f"Error occurred: {e}")
-
-async def get_random_music():
-    objects = list(minio_client.list_objects(settings.MINIO_BUCKET))
-    
-    if not objects:
-        print("No available files.")
-        return None
-    
-    random_music = random.choice(objects)
-    
-    return random_music.object_name

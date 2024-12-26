@@ -10,6 +10,7 @@ services:
       - "443"
     ports:
        - "443:443"
+
   minio:
     image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
     command: server --console-address ":${MINIO_PORT}" /data
@@ -74,8 +75,12 @@ services:
       rabbitmq:
         condition: service_healthy
     volumes:
-      - .:/code  
+      - .:/code
+
+  redis:
+    image: redis:6.2.4
+    ports:
+      - "6379:6379"
 
 volumes:
   audio-files:
-
