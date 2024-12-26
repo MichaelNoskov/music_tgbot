@@ -31,20 +31,18 @@ async def menu(message: Message) -> None:
 @track_latency('start')
 async def start(message: Message, state: FSMContext) -> None:
 
-    # запрос в rabbit для сохранения данных в бд   
+    # запрос в rabbit для сохранения данных в бд
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 
         await exchange.publish(
             aio_pika.Message(
-                msgpack.packb(
-                    {'user_id': message.from_user.id, 'action': 'create_profile'}
-                ),
+                msgpack.packb({'user_id': message.from_user.id, 'action': 'create_profile'}),
             ),
-            'user_ask'
+            'user_ask',
         )
         SEND_MESSAGE.inc()
 
@@ -60,15 +58,14 @@ async def start(message: Message, state: FSMContext) -> None:
         for _ in range(retries):
             try:
                 answer = await user_queue.get()
-                info = msgpack.unpackb(answer.body)        
+                info = msgpack.unpackb(answer.body)
             except asyncio.QueueEmpty:
-                    await asyncio.sleep(1)
+                await asyncio.sleep(1)
 
         if info.get('authorized'):
             await state.set_state(AuthGroup.authorized)
             await menu(message)
             return
-
 
     await state.set_state(AuthGroup.no_authorized)
     await message.answer(render('start.jinja2'))
