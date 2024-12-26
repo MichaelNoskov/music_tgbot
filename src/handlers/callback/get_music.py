@@ -10,6 +10,7 @@ from aio_pika import ExchangeType
 from io import BytesIO
 from src.storage.minio_ import get_music as get_music_from_minio
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from src.templates.keyboards import get_like_keyboard
 
 from src.handlers.callback.router import router
 
@@ -51,12 +52,7 @@ async def get_music(call: CallbackQuery) -> None:
                 # music.name = 'audio.mp3'
                 audio_bytes = await get_music_from_minio(info.get('file_url'))
 
-                if info.get('liked'):
-                    btn = InlineKeyboardButton(text='❤', callback_data=f'dislike:{info.get("music_id")}')
-                else:
-                    btn = InlineKeyboardButton(text='🩶', callback_data=f'like:{info.get("music_id")}')
-
-                reply_markup = InlineKeyboardMarkup(inline_keyboard=[[btn]])
+                reply_markup = get_like_keyboard(info.get('liked'), info.get("music_id"))
 
                 await call.message.answer_audio(
                     BufferedInputFile(audio_bytes, 'music.mp3'),

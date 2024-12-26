@@ -6,6 +6,13 @@ from src.handlers.command.router import router
 from src.templates.env import render
 from src.handlers.states.auth import AuthGroup
 
+from aio_pika import ExchangeType
+import aio_pika
+import msgpack
+import asyncio
+from config.settings import settings
+from src.storage.rabbit import channel_pool
+
 
 @router.message(Command('start'), AuthGroup.authorized)
 async def menu(message: Message) -> None:
@@ -20,5 +27,44 @@ async def menu(message: Message) -> None:
 
 @router.message(Command('start'))
 async def start(message: Message, state: FSMContext) -> None:
+
+    # запрос в rabbit для сохранения данных в бд   
+    async with channel_pool.acquire() as channel:
+        exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
+    
+        queue = await channel.declare_queue('user_ask', durable=True)
+        await queue.bind(exchange, 'user_ask')
+
+        await exchange.publish(
+            aio_pika.Message(
+                msgpack.packb(
+                    {'user_id': message.from_user.id, 'action': 'create_profile'}
+                ),
+            ),
+            'user_ask'
+        )
+
+        user_queue_name = settings.USER_QUEUE.format(user_id=message.from_user.id)
+        user_queue = await channel.declare_queue(user_queue_name, durable=True)
+
+        await user_queue.bind(exchange, user_queue_name)
+
+        retries = 3
+
+        info = {'authorized': False}
+
+        for _ in range(retries):
+            try:
+                answer = await user_queue.get()
+                info = msgpack.unpackb(answer.body)        
+            except asyncio.QueueEmpty:
+                    await asyncio.sleep(1)
+
+        if info.get('authorized'):
+            await state.set_state(AuthGroup.authorized)
+            await menu(message)
+            return
+
+
     await state.set_state(AuthGroup.no_authorized)
     await message.answer(render('start.jinja2'))

@@ -4,6 +4,8 @@ from aiogram.fsm.context import FSMContext
 import aio_pika
 from aio_pika import ExchangeType
 import msgpack
+import asyncio
+from config.settings import settings
 
 from src.handlers.auth.router import router
 from src.handlers.states.auth import AuthGroup, AuthUserProfileForm
@@ -46,8 +48,6 @@ async def process_description(message: Message, state: FSMContext) -> None:
         for field, field_data in (await state.get_data()).items()
     }
 
-    await state.set_state(AuthGroup.authorized)
-
     # запрос в rabbit для сохранения данных в бд   
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
@@ -68,4 +68,26 @@ async def process_description(message: Message, state: FSMContext) -> None:
             'user_ask'
         )
 
-    await redirect_menu(message)
+        user_queue_name = settings.USER_QUEUE.format(user_id=message.from_user.id)
+        user_queue = await channel.declare_queue(user_queue_name, durable=True)
+
+        await user_queue.bind(exchange, user_queue_name)
+
+        retries = 3
+
+        info = {'authorized': False}
+
+        for _ in range(retries):
+            try:
+                answer = await user_queue.get()
+                info = msgpack.unpackb(answer.body)        
+            except asyncio.QueueEmpty:
+                    await asyncio.sleep(1)
+
+        if not info.get('authorized'):
+            await message.answer('Авторизация не удалась, попробуйте позже')
+            await start_auth(message, state)
+            return
+        
+        await state.set_state(AuthGroup.authorized)
+        await redirect_menu(message)
