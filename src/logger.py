@@ -27,4 +27,3 @@ def set_correlation_id() -> str:
 
 
 logger = logging.getLogger('backend_logger')
-

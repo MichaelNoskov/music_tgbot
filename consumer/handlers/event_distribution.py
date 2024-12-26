@@ -27,5 +27,3 @@ async def handle_event_distribution(body: Dict[str, Any]) -> None:
         case 'dislike':
             await handle_event_dislike(body)
             return
-        
-    

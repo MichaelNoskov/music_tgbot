@@ -1,5 +1,5 @@
-from sqlalchemy import Text, String, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 from .meta import Base, UUIDMixin
 
 

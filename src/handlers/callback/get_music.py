@@ -7,8 +7,6 @@ import asyncio
 from src.templates.env import render
 import aio_pika
 from aio_pika import ExchangeType
-from io import BytesIO
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.storage.minio_ import get_music as get_music_from_minio
 from src.templates.keyboards import get_like_keyboard
@@ -24,18 +22,16 @@ async def get_music(call: CallbackQuery) -> None:
 
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 
         body = {'user_id': call.from_user.id, 'action': 'get_music'}
         await exchange.publish(
             aio_pika.Message(
-                msgpack.packb(
-                    body
-                ),
+                msgpack.packb(body),
             ),
-            'user_ask'
+            'user_ask',
         )
         SEND_MESSAGE.inc()
 
@@ -43,12 +39,12 @@ async def get_music(call: CallbackQuery) -> None:
         user_queue = await channel.declare_queue(user_queue_name, durable=True)
 
         await user_queue.bind(exchange, user_queue_name)
-    
+
         retries = 3
         for _ in range(retries):
             try:
                 answer = await user_queue.get()
-                info = msgpack.unpackb(answer.body)        
+                info = msgpack.unpackb(answer.body)
 
                 music_text = render('music.jinja2', music=info)
 
@@ -62,7 +58,7 @@ async def get_music(call: CallbackQuery) -> None:
                     caption=music_text,
                     reply_markup=reply_markup,
                 )
-        
+
                 return
 
             except asyncio.QueueEmpty:

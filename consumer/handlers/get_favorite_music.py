@@ -10,7 +10,6 @@ from src.model.music import Music
 from src.model.person import Person
 from src.model.usermusic import UserMusic
 from src.storage.rabbit import channel_pool
-import random
 from consumer.logger import logger
 
 
@@ -22,9 +21,9 @@ async def handle_event_favorite_music(body: Dict[str, Any]) -> None:
         logger.info('music Loading...')
 
         user_id = (await db.execute(select(Person.id).where(Person.telegram_id == user_tg_id))).scalars().first()
-        
+
         music_ids = (await db.execute(select(UserMusic.music_id).where(UserMusic.user_id == user_id))).scalars().all()
-        
+
         logger.info(music_ids)
 
         music = {'music': []}
@@ -35,19 +34,21 @@ async def handle_event_favorite_music(body: Dict[str, Any]) -> None:
                 {
                     'title': mus.title,
                     'genre': mus.genre,
-                    'author': (await db.execute(select(Person.username).where(Person.id == mus.author))).scalars().first(),
+                    'author': (await db.execute(select(Person.username).where(Person.id == mus.author)))
+                    .scalars()
+                    .first(),
                     'streams': mus.streams,
                     'file_url': mus.file_url,
                     'music_id': str(mus.id),
                     'liked': True,
-                } 
+                }
             )
 
         logger.info(f'Music was found: {music}')
 
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange("user_music", ExchangeType.DIRECT, durable=True)
-        
+
         user_queue_name = settings.USER_QUEUE.format(user_id=user_tg_id)
         user_queue = await channel.declare_queue(user_queue_name, durable=True)
 
@@ -62,4 +63,3 @@ async def handle_event_favorite_music(body: Dict[str, Any]) -> None:
             ),
             routing_key=user_queue_name,
         )
-
