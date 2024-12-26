@@ -5,11 +5,22 @@ services:
     build:
       context: .
     restart: unless-stopped
-    command: python main.py
+    command: uvicorn src.app:create_app --factory --host 0.0.0.0 --port 8001 --workers=1
     expose:
       - "443"
     ports:
        - "443:443"
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus_config.yml"
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
 
   minio:
     image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z

@@ -5,11 +5,12 @@ import msgpack
 from consumer.handlers.event_distribution import handle_event_distribution
 from consumer.logger import LOGGING_CONFIG, logger, correlation_id_ctx
 from src.storage import rabbit
+from consumer.metrics import RECEIVE_MESSAGE
 
 
 async def main() -> None:
     logging.config.dictConfig(LOGGING_CONFIG)
-    logger.info('Запуск consumer...')
+    logger.info('Starting consumer...')
     queue_name = 'user_ask'
     async with rabbit.channel_pool.acquire() as channel:
 
@@ -19,10 +20,9 @@ async def main() -> None:
         logger.info('Consumer Запущен!')
 
         async with queue.iterator() as queue_iter:
-            logger.info('<queue iterator>')
             async for message in queue_iter:
                 async with message.process():
-
+                    RECEIVE_MESSAGE.inc()
                     correlation_id_ctx.set(message.correlation_id)
                     body = msgpack.unpackb(message.body)
 

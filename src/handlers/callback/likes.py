@@ -9,9 +9,12 @@ import asyncio
 
 from src.handlers.callback.router import router
 from src.templates.keyboards import get_like_keyboard
+from src.metrics import track_latency, SEND_MESSAGE
+from src.handlers.states.auth import AuthGroup
 
 
-@router.callback_query(lambda query: 'like' in str(query.data))
+@router.callback_query(lambda query: 'like' in str(query.data), AuthGroup.authorized)
+@track_latency('like-dislike')
 async def likes(call: CallbackQuery) -> None:
     
     action, music_id = call.data.split(':')
@@ -31,6 +34,7 @@ async def likes(call: CallbackQuery) -> None:
             ),
             'user_ask'
         )
+        SEND_MESSAGE.inc()
         
 
         user_queue_name = settings.USER_QUEUE.format(user_id=call.from_user.id)

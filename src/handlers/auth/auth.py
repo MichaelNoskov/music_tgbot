@@ -11,15 +11,18 @@ from src.handlers.auth.router import router
 from src.handlers.states.auth import AuthGroup, AuthUserProfileForm
 from src.handlers.command.start import menu as redirect_menu
 from src.storage.rabbit import channel_pool
+from src.metrics import track_latency, SEND_MESSAGE
 
 
 @router.message(Command('auth'), AuthGroup.no_authorized)
+@track_latency('auth')
 async def start_auth(message: Message, state: FSMContext) -> None:
     await state.set_state(AuthUserProfileForm.default_name)
     await message.answer(f'Ваше имя в Телеграм: {message.from_user.username}\nОставляем его в качестве имени? (ДА/нет)')
 
 
 @router.message(AuthUserProfileForm.default_name)
+@track_latency('use_default_name')
 async def process_name(message: Message, state: FSMContext) -> None:
     if message.text.lower() == 'нет':
         await state.set_state(AuthUserProfileForm.username)
@@ -33,6 +36,7 @@ async def process_name(message: Message, state: FSMContext) -> None:
 
 
 @router.message(AuthUserProfileForm.username)
+@track_latency('username')
 async def process_username(message: Message, state: FSMContext) -> None:
     await state.update_data(username=message.text)
     await state.set_state(AuthUserProfileForm.description)
@@ -40,6 +44,7 @@ async def process_username(message: Message, state: FSMContext) -> None:
 
 
 @router.message(AuthUserProfileForm.description)
+@track_latency('user_description')
 async def process_description(message: Message, state: FSMContext) -> None:
     await state.update_data(description=message.text)
 
@@ -67,6 +72,7 @@ async def process_description(message: Message, state: FSMContext) -> None:
             ),
             'user_ask'
         )
+        SEND_MESSAGE.inc()
 
         user_queue_name = settings.USER_QUEUE.format(user_id=message.from_user.id)
         user_queue = await channel.declare_queue(user_queue_name, durable=True)

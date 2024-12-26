@@ -12,9 +12,11 @@ import msgpack
 import asyncio
 from config.settings import settings
 from src.storage.rabbit import channel_pool
+from src.metrics import track_latency, SEND_MESSAGE
 
 
 @router.message(Command('start'), AuthGroup.authorized)
+@track_latency('start')
 async def menu(message: Message) -> None:
     inline_kb_list = [
         [InlineKeyboardButton(text='Слушать музыку', callback_data='get_music')],
@@ -26,6 +28,7 @@ async def menu(message: Message) -> None:
 
 
 @router.message(Command('start'))
+@track_latency('start')
 async def start(message: Message, state: FSMContext) -> None:
 
     # запрос в rabbit для сохранения данных в бд   
@@ -43,6 +46,7 @@ async def start(message: Message, state: FSMContext) -> None:
             ),
             'user_ask'
         )
+        SEND_MESSAGE.inc()
 
         user_queue_name = settings.USER_QUEUE.format(user_id=message.from_user.id)
         user_queue = await channel.declare_queue(user_queue_name, durable=True)

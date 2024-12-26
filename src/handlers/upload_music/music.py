@@ -13,6 +13,7 @@ import msgpack
 from src.storage.rabbit import channel_pool
 from aio_pika import ExchangeType
 from src.handlers.command.start import menu as render_menu
+from src.metrics import track_latency, SEND_MESSAGE
 
 
 class AudioFilter(BaseFilter):
@@ -21,18 +22,21 @@ class AudioFilter(BaseFilter):
 
 
 @router.message(Command('upload_music'), AuthGroup.authorized)
+@track_latency('upload_music')
 async def music(message: Message, state: FSMContext) -> None:
     await state.set_state(MusicUploadForm.title)
     await message.answer(f'Введи название музыки:')
 
 
 @router.callback_query(F.data == 'upload_music', AuthGroup.authorized)
+@track_latency('upload_music')
 async def music(call: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(MusicUploadForm.title)
     await call.message.answer(f'Введи название музыки:')
 
 
 @router.message(MusicUploadForm.title)
+@track_latency('music_title')
 async def process_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
     await state.set_state(MusicUploadForm.genre)
@@ -40,6 +44,7 @@ async def process_title(message: Message, state: FSMContext) -> None:
 
 
 @router.message(MusicUploadForm.genre)
+@track_latency('music_genre')
 async def process_genre(message: Message, state: FSMContext) -> None:
     await state.update_data(genre=message.text)
     await state.set_state(MusicUploadForm.file)
@@ -47,6 +52,7 @@ async def process_genre(message: Message, state: FSMContext) -> None:
 
 
 @router.message(AudioFilter(), MusicUploadForm.file)
+@track_latency('music_file')
 async def process_file(message: Message, state: FSMContext) -> None:
 
     audio_file_id = message.audio.file_id
@@ -90,6 +96,7 @@ async def process_file(message: Message, state: FSMContext) -> None:
             ),
             'user_ask'
         )
+        SEND_MESSAGE.inc()
 
     # await message.answer('окей')
 

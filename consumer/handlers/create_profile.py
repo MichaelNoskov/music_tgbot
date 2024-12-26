@@ -59,4 +59,5 @@ async def handle_event_profile(body: Dict[str, Any]) -> None:
             ),
             routing_key=user_queue_name,
         )
+        
     
