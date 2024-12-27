@@ -8,16 +8,20 @@ services:
     command: uvicorn src.app:create_app --factory --host 0.0.0.0 --port 8001 --workers=1
     expose:
       - "443"
+      - "8001"
     ports:
        - "443:443"
+       - "8001:8001"
 
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus_config.yml"
+    expose:
+      - "9090"
     ports:
-      - "9091:9091"
+      - "9090:9090"
     restart: unless-stopped
     volumes:
       - ./prometheus:/etc/prometheus
@@ -79,9 +83,9 @@ services:
   consumer:
     build:
       context: .
-    command: uvicorn consumer.web_app:create_app --factory --host 0.0.0.0 --port 8010 --workers=1
+    command: uvicorn consumer.web_app:create_app --factory --host 0.0.0.0 --port 8090 --workers=1
     ports:
-      - "8090:8010"
+      - "8090:8090"
     depends_on:
       rabbitmq:
         condition: service_healthy

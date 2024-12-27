@@ -6,6 +6,7 @@ from prometheus_client import Counter, Histogram
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
+from src.logger import logger
 
 BUCKETS = [
     0.2,
@@ -47,15 +48,17 @@ REQUESTS_TOTAL = Counter('http_request_total', 'Кол-во запросов к 
 
 class RPSTrackerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        logger.info(1)
         try:
             response: Response = await call_next(request)
+            logger.info(response)
             status_code = response.status_code
         except Exception:
             status_code = 500
             raise
         finally:
             REQUESTS_TOTAL.labels(handler=request.url.path, status_code=str(status_code)).inc()
-
+        logger.info(3)
         return response
 
 

@@ -6,4 +6,4 @@ scrape_configs:
       - targets: ['telegram_bot:8001']
   - job_name: 'consumer'
     static_configs:
-      - targets: ['consumer:8010']
+      - targets: ['consumer:8090']
