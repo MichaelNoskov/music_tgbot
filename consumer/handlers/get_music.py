@@ -20,26 +20,32 @@ async def handle_event_music(body: Dict[str, Any]) -> None:
     async with async_session() as db:
 
         logger.info('music Loading...')
-        
+
         result = await db.execute(select(Music))
         music_objects = result.scalars().all()
 
         random_music = {'title': 'default', 'genre': 'classic', 'author': 'Michael', 'streams': '∞'}
-        
+
         if len(music_objects) > 0:
-            mus = music_objects[random.randint(0, len(music_objects)-1)]
+            mus = music_objects[random.randint(0, len(music_objects) - 1)]
 
             author_name = (await db.execute(select(Person.username).where(Person.id == mus.author))).scalars().first()
             logger.info('author')
 
-            user_id = (await db.execute(select(Person.id).where(Person.telegram_id == str(user_tg_id)))).scalars().first()
+            user_id = (
+                (await db.execute(select(Person.id).where(Person.telegram_id == str(user_tg_id)))).scalars().first()
+            )
             logger.info('user')
             if user_id is None:
                 liked = False
             else:
                 user_id = user_id
                 logger.info(f'user: {type(user_id)}')
-                liked = (await db.execute(select(UserMusic).where(UserMusic.user_id == user_id).where(UserMusic.music_id == mus.id))).scalars().first() is not None
+                liked = (
+                    await db.execute(
+                        select(UserMusic).where(UserMusic.user_id == user_id).where(UserMusic.music_id == mus.id)
+                    )
+                ).scalars().first() is not None
                 logger.info('liked')
 
             mus.streams += 1
@@ -59,7 +65,7 @@ async def handle_event_music(body: Dict[str, Any]) -> None:
 
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange("user_music", ExchangeType.DIRECT, durable=True)
-        
+
         user_queue_name = settings.USER_QUEUE.format(user_id=user_tg_id)
         user_queue = await channel.declare_queue(user_queue_name, durable=True)
 
@@ -74,4 +80,3 @@ async def handle_event_music(body: Dict[str, Any]) -> None:
             ),
             routing_key=user_queue_name,
         )
-

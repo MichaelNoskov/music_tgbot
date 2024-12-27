@@ -1,4 +1,3 @@
-from aiogram.filters import Command
 from aiogram.filters import BaseFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
@@ -21,18 +20,11 @@ class AudioFilter(BaseFilter):
         return bool(message.audio)
 
 
-@router.message(Command('upload_music'), AuthGroup.authorized)
-@track_latency('upload_music')
-async def music(message: Message, state: FSMContext) -> None:
-    await state.set_state(MusicUploadForm.title)
-    await message.answer(f'Введи название музыки:')
-
-
 @router.callback_query(F.data == 'upload_music', AuthGroup.authorized)
 @track_latency('upload_music')
 async def music(call: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(MusicUploadForm.title)
-    await call.message.answer(f'Введи название музыки:')
+    await call.message.answer('Введи название музыки:')
 
 
 @router.message(MusicUploadForm.title)
@@ -40,7 +32,7 @@ async def music(call: CallbackQuery, state: FSMContext) -> None:
 async def process_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
     await state.set_state(MusicUploadForm.genre)
-    await message.answer(f'Введи название жанра:')
+    await message.answer('Введи название жанра:')
 
 
 @router.message(MusicUploadForm.genre)
@@ -48,7 +40,7 @@ async def process_title(message: Message, state: FSMContext) -> None:
 async def process_genre(message: Message, state: FSMContext) -> None:
     await state.update_data(genre=message.text)
     await state.set_state(MusicUploadForm.file)
-    await message.answer(f'Отправь файл с музыкой')
+    await message.answer('Отправь файл с музыкой')
 
 
 @router.message(AudioFilter(), MusicUploadForm.file)
@@ -61,10 +53,7 @@ async def process_file(message: Message, state: FSMContext) -> None:
     file_info = await bot.get_file(audio_file_id)
     file_bytes = await bot.download_file(file_info.file_path)
 
-    form: dict[str, str | int] = {
-        field: field_data
-        for field, field_data in (await state.get_data()).items()
-    }
+    form: dict[str, str | int] = {field: field_data for field, field_data in (await state.get_data()).items()}
 
     # сохранение музыки в minio
 
@@ -72,16 +61,12 @@ async def process_file(message: Message, state: FSMContext) -> None:
     await upload_music(filepath, file_bytes.getvalue())
     await state.update_data(file_url=filepath)
 
-    form: dict[str, str | int] = {
-        field: field_data
-        for field, field_data in (await state.get_data()).items()
-    }
+    form: dict[str, str | int] = {field: field_data for field, field_data in (await state.get_data()).items()}
 
-
-    # запрос в rabbit для сохранения данных в бд   
+    # запрос в rabbit для сохранения данных в бд
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 
@@ -90,11 +75,9 @@ async def process_file(message: Message, state: FSMContext) -> None:
 
         await exchange.publish(
             aio_pika.Message(
-                msgpack.packb(
-                    form
-                ),
+                msgpack.packb(form),
             ),
-            'user_ask'
+            'user_ask',
         )
         SEND_MESSAGE.inc()
 

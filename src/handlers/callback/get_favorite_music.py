@@ -21,21 +21,19 @@ from src.handlers.states.auth import AuthGroup
 async def get_favorite_music(call: CallbackQuery) -> None:
     if isinstance(call.message, Message):
         await call.answer('Ищу ваши любимые треки...')
-    
+
     async with channel_pool.acquire() as channel:
         exchange = await channel.declare_exchange('user_music', ExchangeType.DIRECT, durable=True)
-    
+
         queue = await channel.declare_queue('user_ask', durable=True)
         await queue.bind(exchange, 'user_ask')
 
         body = {'user_id': call.from_user.id, 'action': 'get_favorite_music'}
         await exchange.publish(
             aio_pika.Message(
-                msgpack.packb(
-                    body
-                ),
+                msgpack.packb(body),
             ),
-            'user_ask'
+            'user_ask',
         )
         SEND_MESSAGE.inc()
 
@@ -43,19 +41,18 @@ async def get_favorite_music(call: CallbackQuery) -> None:
         user_queue = await channel.declare_queue(user_queue_name, durable=True)
 
         await user_queue.bind(exchange, user_queue_name)
-    
+
         retries = 3
         for _ in range(retries):
             try:
                 answer = await user_queue.get()
                 info = msgpack.unpackb(answer.body)
-                
+
                 music_objs = info.get('music')
 
                 if len(music_objs) < 1:
                     await call.message.answer('У вас нет понравившейся музыки')
                     return
-
 
                 await call.message.answer('Ваша любимая музыка:')
                 for music in music_objs:
@@ -70,7 +67,7 @@ async def get_favorite_music(call: CallbackQuery) -> None:
                         caption=music_text,
                         reply_markup=reply_markup,
                     )
-                await call.message.answer('👆 Музыка загружена 👆\n/start - показать меню')        
+                await call.message.answer('👆 Музыка загружена 👆\n/start - показать меню')
                 return
 
             except asyncio.QueueEmpty:

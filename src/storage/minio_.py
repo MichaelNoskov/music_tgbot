@@ -1,5 +1,3 @@
-import random
-
 from minio import Minio
 from minio.error import S3Error
 from config.settings import settings
@@ -10,8 +8,9 @@ minio_client = Minio(
     endpoint=settings.MINIO_ENDPOINT,
     access_key=settings.MINIO_ROOT_USER,
     secret_key=settings.MINIO_ROOT_PASSWORD,
-    secure=False
+    secure=False,
 )
+
 
 async def upload_music(filename, audio_bytes):
     try:
@@ -19,10 +18,7 @@ async def upload_music(filename, audio_bytes):
             minio_client.make_bucket(settings.MINIO_BUCKET)
 
         minio_client.put_object(
-            bucket_name=settings.MINIO_BUCKET, 
-            object_name=filename, 
-            data=BytesIO(audio_bytes),
-            length=len(audio_bytes)
+            bucket_name=settings.MINIO_BUCKET, object_name=filename, data=BytesIO(audio_bytes), length=len(audio_bytes)
         )
         print(f"File {filename} uploaded to bucket {settings.MINIO_BUCKET}.")
 

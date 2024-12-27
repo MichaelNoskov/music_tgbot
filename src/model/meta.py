@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Mapped, DeclarativeBase, mapped_column
 from uuid import UUID, uuid4
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import MetaData
 
 
